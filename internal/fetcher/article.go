@@ -197,6 +197,13 @@ func (a *Article) fetchTitle() (string, error) {
 			configs.Data.MS["newtalk"].Title)
 	}
 	title := n[0].FirstChild.Data
+	ignores := []string{"| 遊戲", "| 電競", "| 網紅", "| 娛樂",
+		"| 體育", "| 旅遊", "| 創夢", "| 新奇", "| 藝文"}
+	for _, v := range ignores {
+		if strings.Contains(title, v) {
+			return "ignore", ErrIgnoreCate
+		}
+	}
 	rp := strings.NewReplacer(" | 新頭殼 Newtalk", "")
 	title = strings.TrimSpace(rp.Replace(title))
 	return gears.ChangeIllegalChar(title), nil
