@@ -197,7 +197,7 @@ func (a *Article) fetchTitle() (string, error) {
 			configs.Data.MS["newtalk"].Title)
 	}
 	title := n[0].FirstChild.Data
-	rp := strings.NewReplacer("-風傳媒", "")
+	rp := strings.NewReplacer(" | 新頭殼 Newtalk", "")
 	title = strings.TrimSpace(rp.Replace(title))
 	return gears.ChangeIllegalChar(title), nil
 }
@@ -210,19 +210,27 @@ func (a *Article) fetchUpdateTime() (*timestamppb.Timestamp, error) {
 
 	t := time.Now() // if no time fetched, return current time
 	var err error
-	n := exhtml.MetasByProperty(a.doc, "article:published_time")
-	if len(n) == 0 {
-		return nil, fmt.Errorf("[%s] fetchUpdateTime error, no meta named date matched: %s",
+	doc := exhtml.ElementsByTagAndType(a.doc, "script", "application/ld+json")
+	if doc == nil {
+		return nil, fmt.Errorf("[%s] fetchUpdateTime: cannot get target nodes: %s",
 			configs.Data.MS["newtalk"].Title, a.U.String())
 	}
-	for _, nn := range n {
-		for _, x := range nn.Attr {
-			if x.Key == "content" {
-				t, err = time.Parse(time.RFC3339, x.Val+"+08:00")
-				if err != nil {
-					return nil, errors.WithMessage(err,
-						"caught meta but no content matched.")
-				}
+	for _, d := range doc {
+		if d.FirstChild == nil {
+			return nil, fmt.Errorf("[%s] fetchUpdateTime: d.FirstChild is nil: %s",
+				configs.Data.MS["newtalk"].Title, a.U.String())
+		}
+		if d.FirstChild.Type == html.TextNode {
+			re := regexp.MustCompile(`(?m)"datePublished":\s*?"([^"]*?)",`)
+			rs := re.FindStringSubmatch(d.FirstChild.Data)
+			if len(rs) != 2 {
+				return nil, fmt.Errorf("[%s] fetchUpdateTime: regexp nil: %s",
+					configs.Data.MS["newtalk"].Title, a.U.String())
+			}
+			t, err = time.Parse(time.RFC3339, rs[1])
+			if err != nil {
+				return nil, errors.WithMessagef(err, "[%s] time parse error: %s",
+					configs.Data.MS["newtalk"].Title, a.U.String())
 			}
 		}
 	}
@@ -243,20 +251,8 @@ func (a *Article) fetchContent() (string, error) {
 		return "", errors.Errorf("[%s] fetchContent: doc is nil: %s",
 			configs.Data.MS["newtalk"].Title, a.U.String())
 	}
-	ignoreN := exhtml.ElementsByTagAndClass(a.doc, "a", "tags_link")
-	for _, v := range ignoreN {
-		if v.FirstChild != nil && v.FirstChild.Type == html.TextNode {
-			for _, kw := range []string{"地方新聞", "運動", "房市",
-				"房地產", "理財", "健康", "證券投資", "藝文",
-				"娛樂", "職場", "歷史"} {
-				if v.FirstChild.Data == kw {
-					return "", ErrIgnoreCate
-				}
-			}
-		}
-	}
 	body := ""
-	bodyN := exhtml.ElementsByTagAndId(a.doc, "div", "CMS_wrapper")
+	bodyN := exhtml.ElementsByTagAttr(a.doc, "div", "itemprop", "articleBody")
 	if len(bodyN) == 0 {
 		return body, errors.Errorf("no article content matched: %s", a.U.String())
 	}
@@ -276,13 +272,14 @@ func (a *Article) fetchContent() (string, error) {
 			x = re.ReplaceAllString(x, "${1}")
 			re = regexp.MustCompile(`(?m)<span.*?>(.*?)</span>`)
 			x = re.ReplaceAllString(x, "${1}")
-			re = regexp.MustCompile(`(?m)(.*?)<a class="notify_wordings".*?</a>(.*?)`)
 			x = re.ReplaceAllString(x, "${1}${2}")
+			re = regexp.MustCompile(`(?m)<em>(.*?)</em>`)
+			x = re.ReplaceAllString(x, "*${1}*")
 			re = regexp.MustCompile(`(?m)<b.*?>(.*?)</b>`)
 			x = re.ReplaceAllString(x, "**${1}**")
 			re = regexp.MustCompile(`(?m)<strong>(.*?)</strong>`)
 			x = re.ReplaceAllString(x, "**${1}**")
-			re = regexp.MustCompile(`(?m)<a .*? href="(?P<href>.*?)".*?>(?P<x>.*?)</a>`)
+			re = regexp.MustCompile(`(?m)<a .*?href="(?P<href>.*?)".*?>(?P<x>.*?)</a>`)
 			x = re.ReplaceAllString(x, "[${x}](https://www.newtalk.mg/${href})")
 			if strings.TrimSpace(x) != "" {
 				body += x + "  \n"

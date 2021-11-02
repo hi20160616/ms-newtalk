@@ -14,8 +14,7 @@ func TestFetchTitle(t *testing.T) {
 		url   string
 		title string
 	}{
-		{"https://www.newtalk.mg/article/3974235", "觀點投書：說好的不是一日球迷呢？台灣體育的卑微"},
-		{"https://www.newtalk.mg/article/4018173", "藍綠備戰“中二選區”立委補選　“話題女王”林靜儀聲量高力壓顏寬恒"},
+		{"https://newtalk.tw/news/view/2021-11-02/660037", "批藍反萊豬鎖死台灣 蘇貞昌：朱立倫講瘋豬肉還想親美？ | 政治"},
 	}
 	for _, tc := range tests {
 		a := NewArticle()
@@ -50,8 +49,7 @@ func TestFetchUpdateTime(t *testing.T) {
 		url  string
 		want string
 	}{
-		{"https://www.newtalk.mg/article/3974235", "2021-10-09 05:30:01 +0800 UTC"},
-		{"https://www.newtalk.mg/article/4018173", "2021-10-29 09:26:40 +0800 UTC"},
+		{"https://newtalk.tw/news/view/2021-11-02/660037", "2021-11-02 09:59:07 +0800 UTC"},
 	}
 	var err error
 	for _, tc := range tests {
@@ -84,8 +82,7 @@ func TestFetchContent(t *testing.T) {
 		url  string
 		want string
 	}{
-		{"https://www.newtalk.mg/article/3974235", "觀點投書：說好的不是一日球迷呢？台灣體育的卑微"},
-		{"https://www.newtalk.mg/article/4018173", "藍綠備戰“中二選區”立委補選　“話題女王”林靜儀聲量高力壓顏寬恒"},
+		{"https://newtalk.tw/news/view/2021-11-02/660037", "2021-11-02 09:59:07 +0800 UTC"},
 	}
 	var err error
 
@@ -113,8 +110,8 @@ func TestFetchArticle(t *testing.T) {
 		url string
 		err error
 	}{
-		{"https://www.newtalk.mg/article/3974235", ErrTimeOverDays},
-		{"https://www.newtalk.mg/article/4018173", nil},
+		{"https://newtalk.tw/news/view/2021-10-28/658199", ErrTimeOverDays},
+		{"https://newtalk.tw/news/view/2021-11-02/660037", nil},
 	}
 	for _, tc := range tests {
 		a := NewArticle()
