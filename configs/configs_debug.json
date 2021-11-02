@@ -1,0 +1,12 @@
+{
+  "microservice":{
+    "newtalk":{
+      "title":"newtalk",
+      "domain":"newtalk.tw",
+      "url":["https://newtalk.tw/rss/all/"],
+      "addr":":10014",
+      "timeout":"1s",
+      "heartbeat":"5m"
+    }
+  }
+}

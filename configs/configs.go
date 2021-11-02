@@ -34,7 +34,7 @@ func setRootPath() error {
 	var root string
 	var err error
 	if strings.Contains(os.Args[0], ".test") {
-		root = "../../" // for test dbmanager
+		root = "../../" // for test fetcher
 		// root = "../" // for test configs
 	} else {
 		root, err = os.Getwd()
@@ -55,8 +55,17 @@ func get() error {
 		return err
 	}
 
-	// test gist
-	// Data.Gist = "https://gist.github.com/hi20160616/d932caa9c0c905c07ee4f773fea7c850/raw/configs.json"
+	// for debug
+	if Data.Debug {
+		c, err := os.ReadFile(filepath.Join(Data.RootPath, "configs/configs_debug.json"))
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(c, Data); err != nil {
+			return err
+		}
+		return nil
+	}
 	resp, err := http.Get(Data.Gist)
 	if err != nil {
 		return err
@@ -66,7 +75,7 @@ func get() error {
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(body, &Data); err != nil {
+	if err := json.Unmarshal(body, Data); err != nil {
 		return err
 	}
 
